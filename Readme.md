@@ -1,3 +1,5 @@
+Require llama3.2 
+
 to install pip use 
 
 pip install -r reqiurement.txt
