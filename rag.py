@@ -172,11 +172,7 @@ elif tab_selection == "Modify Image":
 
         # Grayscale option
         grayscale = st.checkbox("Convert to Grayscale", value=False)
-
-        # Add text overlay option
-        text_overlay = st.text_input("Text Overlay", "")
-        text_color = st.color_picker("Text Color", "#000000")
-
+        
         # Prompt for image modification (text input)
         modify_prompt = st.text_input("Modification Prompt", "Describe how to modify the image")
 
