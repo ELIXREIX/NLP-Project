@@ -4,7 +4,7 @@ import time
 import asyncio
 from diffusers import StableDiffusionPipeline, StableDiffusionImg2ImgPipeline
 import torch
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageDraw, ImageFont
 
 # Load Stable Diffusion models
 text2img_pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16)
@@ -17,7 +17,6 @@ img2img_pipe = img2img_pipe.to("cuda")
 with st.sidebar:
     st.write("**Ollama LLaMA Chatbot**")
     st.write("[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)")
-    st.write("[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)")
 
     # Sidebar tab for image modification
     tab_selection = st.radio("Select an option:", ["Chatbot", "Modify Image"], index=0)
@@ -98,18 +97,83 @@ elif tab_selection == "Modify Image":
     uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"], key="image_uploader")
 
     if uploaded_file is not None:
-        # Convert uploaded file to a PIL Image
+        # Convert uploaded file to PIL Image
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Preview Image", use_column_width=True)
 
-        # Text input for modification prompt
-        modify_prompt = st.text_input("Enter a description for modification (e.g., 'add a sunset glow'): ")
+        # Modify image options - displayed after image upload
+        st.write("**Image Adjustments**")
+        brightness = st.slider("Adjust Brightness", 0.5, 2.0, 1.0, step=0.1)
+        contrast = st.slider("Adjust Contrast", 0.5, 2.0, 1.0, step=0.1)
+        sharpness = st.slider("Adjust Sharpness", 0.5, 2.0, 1.0, step=0.1)
+        blur = st.slider("Adjust Blur", 0, 10, 0, step=1)
+        saturation = st.slider("Adjust Saturation", 0.5, 2.0, 1.0, step=0.1)
+
+        # Rotation and flipping options
+        rotate = st.slider("Rotate Image", 0, 360, 0, step=90)
+        flip_option = st.radio("Flip Image", ["None", "Horizontal", "Vertical"])
+
+        # Resize options
+        resize = st.checkbox("Resize Image", value=False)
+        if resize:
+            width = st.slider("Width", 100, 1000, 512)
+            height = st.slider("Height", 100, 1000, 512)
+
+        # Grayscale option
+        grayscale = st.checkbox("Convert to Grayscale", value=False)
+
+        # Add text overlay option
+        text_overlay = st.text_input("Text Overlay", "")
+        text_color = st.color_picker("Text Color", "#000000")
+
+        # Prompt for image modification (text input)
+        modify_prompt = st.text_input("Modification Prompt", "Describe how to modify the image")
 
         # Button to confirm modification
         if st.button("Modify Image"):
             with st.spinner("Modifying image..."):
-                # Apply modification to the uploaded image
-                resized_image = image.resize((512, 512))
-                modified_image = img2img_pipe(prompt=modify_prompt, image=resized_image, strength=0.75).images[0]
-                st.image(modified_image, caption=f"Modified Image for: '{modify_prompt}'", use_column_width=True)
-                st.session_state["image_uploaded"] = True  # Update the state to indicate an image has been uploaded
+                # Apply brightness, contrast, sharpness, saturation, and blur adjustments
+                enhancer = ImageEnhance.Brightness(image)
+                image = enhancer.enhance(brightness)
+                enhancer = ImageEnhance.Contrast(image)
+                image = enhancer.enhance(contrast)
+                enhancer = ImageEnhance.Sharpness(image)
+                image = enhancer.enhance(sharpness)
+                enhancer = ImageEnhance.Color(image)
+                image = enhancer.enhance(saturation)
+                if blur > 0:
+                    image = image.filter(ImageFilter.GaussianBlur(blur))
+
+                # Apply rotation and flip
+                if rotate != 0:
+                    image = image.rotate(rotate)
+                if flip_option == "Horizontal":
+                    image = image.transpose(Image.FLIP_LEFT_RIGHT)
+                elif flip_option == "Vertical":
+                    image = image.transpose(Image.FLIP_TOP_BOTTOM)
+
+                # Resize if the option is selected
+                if resize:
+                    image = image.resize((width, height))
+
+                # Convert to grayscale if selected
+                if grayscale:
+                    image = ImageOps.grayscale(image)
+
+                # Add text overlay if provided
+                if text_overlay:
+                    draw = ImageDraw.Draw(image)
+                    font = ImageFont.load_default()
+                    text_width, text_height = draw.textsize(text_overlay, font)
+                    position = (image.width // 2 - text_width // 2, image.height // 2 - text_height // 2)
+                    draw.text(position, text_overlay, fill=text_color, font=font)
+
+                # Apply any text-based modification (if provided)
+                if modify_prompt:
+                    resized_image = image.resize((512, 512))
+                    modified_image = img2img_pipe(prompt=modify_prompt, image=resized_image, strength=0.75).images[0]
+                    image = modified_image
+
+                # Display the modified image
+                st.image(image, caption=f"Modified Image for: '{modify_prompt}'", use_column_width=True)
+                st.session_state["image_uploaded"] = True
