@@ -4,7 +4,7 @@ import time
 import asyncio
 from diffusers import StableDiffusionPipeline, StableDiffusionImg2ImgPipeline
 import torch
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageDraw, ImageFont
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 # Load Stable Diffusion models
 text2img_pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16)
@@ -116,7 +116,7 @@ if tab_selection == "Generate Image":
     # Guidance scale to control adherence to prompt
     guidance_scale = st.slider("Guidance Scale", 7.5, 20.0, 12.0, step=0.5)
 
-    if prompt:
+    if st.button("Generate Image"):
         with st.spinner("Generating image..."):
             try:
                 # Adjust resolution based on user selection
@@ -151,6 +151,7 @@ elif tab_selection == "Modify Image":
         # Convert uploaded file to PIL Image
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Preview Image", use_column_width=True)
+        resized_image = image.resize((512, 512))    
 
         # Modify image options - displayed after image upload
         st.write("**Image Adjustments**")
@@ -180,13 +181,13 @@ elif tab_selection == "Modify Image":
         if st.button("Modify Image"):
             with st.spinner("Modifying image..."):
                 # Apply brightness, contrast, sharpness, saturation, and blur adjustments
-                enhancer = ImageEnhance.Brightness(image)
+                enhancer = ImageEnhance.Brightness(resized_image)
                 image = enhancer.enhance(brightness)
-                enhancer = ImageEnhance.Contrast(image)
+                enhancer = ImageEnhance.Contrast(resized_image)
                 image = enhancer.enhance(contrast)
-                enhancer = ImageEnhance.Sharpness(image)
+                enhancer = ImageEnhance.Sharpness(resized_image)
                 image = enhancer.enhance(sharpness)
-                enhancer = ImageEnhance.Color(image)
+                enhancer = ImageEnhance.Color(resized_image)
                 image = enhancer.enhance(saturation)
                 if blur > 0:
                     image = image.filter(ImageFilter.GaussianBlur(blur))
@@ -205,7 +206,7 @@ elif tab_selection == "Modify Image":
 
                 # Convert to grayscale if selected
                 if grayscale:
-                    image = ImageOps.grayscale(image)
+                    image = ImageOps.grayscale(resized_image)
 
                 # Apply any text-based modification (if provided)
                 if modify_prompt:
