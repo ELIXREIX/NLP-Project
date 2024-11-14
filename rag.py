@@ -172,7 +172,7 @@ elif tab_selection == "Modify Image":
 
         # Grayscale option
         grayscale = st.checkbox("Convert to Grayscale", value=False)
-        
+
         # Prompt for image modification (text input)
         modify_prompt = st.text_input("Modification Prompt", "Describe how to modify the image")
 
@@ -206,14 +206,6 @@ elif tab_selection == "Modify Image":
                 # Convert to grayscale if selected
                 if grayscale:
                     image = ImageOps.grayscale(image)
-
-                # Add text overlay if provided
-                if text_overlay:
-                    draw = ImageDraw.Draw(image)
-                    font = ImageFont.load_default()
-                    text_width, text_height = draw.textsize(text_overlay, font)
-                    position = (image.width // 2 - text_width // 2, image.height // 2 - text_height // 2)
-                    draw.text(position, text_overlay, fill=text_color, font=font)
 
                 # Apply any text-based modification (if provided)
                 if modify_prompt:
