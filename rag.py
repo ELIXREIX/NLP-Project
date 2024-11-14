@@ -64,7 +64,7 @@ if tab_selection == "Chatbot":
         full_response = ollama.generate("llama3.2", prompt)
         return full_response['response']
 
-    # Handle user input
+
 # Handle user input
 if prompt := st.chat_input(key="unique_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
