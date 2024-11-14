@@ -4,7 +4,7 @@ import time
 import asyncio
 from diffusers import StableDiffusionPipeline, StableDiffusionImg2ImgPipeline
 import torch
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageDraw, ImageFont
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 # Load Stable Diffusion models
 text2img_pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16)
