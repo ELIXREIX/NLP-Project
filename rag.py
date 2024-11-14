@@ -15,11 +15,11 @@ img2img_pipe = img2img_pipe.to("cuda")
 
 # Streamlit Sidebar with tabs
 with st.sidebar:
-    st.write("**Ollama LLaMA Chatbot**")
+    st.write("**Ollama + Stablediffusion**")
     st.write("[View the source code](https://github.com/ELIXREIX/NLP-Project)")
 
     # Sidebar tab for image modification
-    tab_selection = st.radio("Select an option:", ["Chatbot", "Modify Image"], index=0)
+    tab_selection = st.radio("Select an option:", ["Chatbot", "Modify Image", "Generate Image"], index=0)
 
 # App title
 st.title("💬 Chatbot with Image Generation and Modification")
@@ -90,6 +90,57 @@ if prompt := st.chat_input(key="unique_chat_input"):
             type_text(assistant_message_placeholder, response_msg)
 
         st.session_state.messages.append({"role": "assistant", "content": response_msg})
+
+# Generate Image Tab
+if tab_selection == "Generate Image":
+    st.write("**Enter a prompt to generate an image:**")
+    
+    # Input box for the user to enter prompt for image generation
+    prompt = st.text_input("Enter image description", "")
+
+    # Additional options for image generation
+    st.write("**Advanced Image Generation Options**")
+
+    # Image resolution options
+    resolution = st.selectbox("Select Image Resolution", ["Low (256x256)", "Medium (512x512)", "High (1024x1024)"], index=1)
+
+    # Creativity / randomness control
+    creativity = st.slider("Creativity (Influences style variation)", 0.0, 1.0, 0.7, step=0.05)
+
+    # Input for seed value (deterministic generation)
+    seed = st.number_input("Enter a Seed Value (Optional)", min_value=0, max_value=2**32-1, value=42)
+
+    # Option to generate multiple variations
+    num_variations = st.slider("Number of Variations", 1, 5, 1, step=1)
+
+    # Guidance scale to control adherence to prompt
+    guidance_scale = st.slider("Guidance Scale", 7.5, 20.0, 12.0, step=0.5)
+
+    if prompt:
+        with st.spinner("Generating image..."):
+            try:
+                # Adjust resolution based on user selection
+                if resolution == "Low (256x256)":
+                    height, width = 256, 256
+                elif resolution == "Medium (512x512)":
+                    height, width = 512, 512
+                else:
+                    height, width = 1024, 1024
+
+                # Generate image with specific options (creativity, seed, and guidance scale)
+                generator = torch.manual_seed(seed) if seed else None
+                image = text2img_pipe(prompt, height=height, width=width, guidance_scale=guidance_scale, generator=generator).images[0]
+
+                # Display the generated image
+                st.image(image, caption=f"Generated Image for: '{prompt}'", use_column_width=True)
+
+                # Optionally generate multiple variations
+                for i in range(1, num_variations):
+                    variation_image = text2img_pipe(prompt, height=height, width=width, guidance_scale=guidance_scale, generator=generator).images[0]
+                    st.image(variation_image, caption=f"Variation {i+1} for: '{prompt}'", use_column_width=True)
+
+            except Exception as e:
+                st.error(f"An error occurred while generating the image: {e}")
 
 # Modify Image Tab
 elif tab_selection == "Modify Image":
