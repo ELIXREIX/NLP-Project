@@ -16,7 +16,7 @@ img2img_pipe = img2img_pipe.to("cuda")
 # Streamlit Sidebar with tabs
 with st.sidebar:
     st.write("**Ollama LLaMA Chatbot**")
-    st.write("[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)")
+    st.write("[View the source code](https://github.com/ELIXREIX/NLP-Project)")
 
     # Sidebar tab for image modification
     tab_selection = st.radio("Select an option:", ["Chatbot", "Modify Image"], index=0)
